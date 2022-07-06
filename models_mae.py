@@ -13,7 +13,7 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 from timm.models.vision_transformer import PatchEmbed, Block
 
 from util.pos_embed import get_2d_sincos_pos_embed
@@ -229,7 +229,6 @@ class MAEMAPViT(MaskedAutoencoderViT):
         self.class_out = patch_num**2
         self.register_buffer('alphas', torch.as_tensor(alphas)) # to force the alpha to move gpu
 
-        self.alpha_loss = nn.CrossEntropyLoss()
         self.register_buffer('cls_weight', torch.as_tensor(cls_weight))
         if cls_weight != 0:
             self.cls_head = nn.Linear(kwargs["embed_dim"], len(alphas))
@@ -316,7 +315,7 @@ class MAEMAPViT(MaskedAutoencoderViT):
             loss = self.forward_loss(imgs, pred, mask) * self.recon_weight
 
         if self.cls_weight != 0:
-            cls_loss = self.alpha_loss(alpha_logits.permute(0, 2, 1), cls_labels) * self.cls_weight
+            cls_loss = F.cross_entropy(alpha_logits.permute(0, 2, 1), cls_labels) * self.cls_weight
             loss = loss + cls_loss
 
         return loss, pred, mask
