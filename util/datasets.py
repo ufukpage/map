@@ -21,7 +21,18 @@ def build_dataset(is_train, args):
     transform = build_transform(is_train, args)
 
     root = os.path.join(args.data_path, 'train' if is_train else 'val')
-    dataset = datasets.ImageFolder(root, transform=transform)
+
+    if args.dataset_type == 1:
+        from torchvision.datasets.cifar import CIFAR10
+        dataset = CIFAR10(root="./", train=is_train, transform=transform, download=True)
+    elif args.dataset_type == 2:
+        from torchvision.datasets.cifar import CIFAR100
+        dataset = CIFAR100(root="./", train=is_train, transform=transform, download=True)
+    elif args.dataset_type == 3:
+        from util.FlowersDataset import Flowers102
+        dataset = Flowers102(root="./", split= 'train' if is_train else 'val', transform=transform, download=True)
+    else:
+        dataset = datasets.ImageFolder(root, transform=transform)
 
     print(dataset)
 

@@ -101,6 +101,8 @@ def get_args_parser():
                         help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
     parser.add_argument('--no_pin_mem', action='store_false', dest='pin_mem')
     parser.set_defaults(pin_mem=True)
+    parser.add_argument('--dataset_type', default=0, type=int,
+                        help='0 for default imagenet, 1 for cifar 10, 2 for cifar 100, 3 for oxford flowers ')
 
     # distributed training parameters
     parser.add_argument('--world_size', default=1, type=int,
@@ -139,8 +141,21 @@ def main(args):
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
-    dataset_val = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_val)
+    if args.dataset_type == 1:
+        from torchvision.datasets.cifar import CIFAR10
+        dataset_train = CIFAR10(root="./", train=True, transform=transform_train, download=True)
+        dataset_val = CIFAR10(root="./", train=False, transform=transform_val, download=True)
+    elif args.dataset_type == 2:
+        from torchvision.datasets.cifar import CIFAR100
+        dataset_train = CIFAR100(root="./", train=True, transform=transform_train, download=True)
+        dataset_val = CIFAR100(root="./", train=False, transform=transform_val, download=True)
+    elif args.dataset_type == 3:
+        from util.FlowersDataset import Flowers102
+        dataset_train = Flowers102(root="./", split='true', transform=transform_train, download=True)
+        dataset_val = Flowers102(root="./", split='val', transform=transform_val, download=True)
+    else:
+        dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
+        dataset_val = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_val)
     print(dataset_train)
     print(dataset_val)
 

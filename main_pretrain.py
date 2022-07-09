@@ -62,6 +62,9 @@ def get_args_parser():
     parser.add_argument('--cls_weight', default=0.5, type=float,
                         help='Alpha_Classifier Loss Weight')
 
+    parser.add_argument('--patch_size', default=16, type=int,
+                        help='Patch Size')
+
     parser.set_defaults(norm_pix_loss=False)
 
     # Optimizer parameters
@@ -84,11 +87,14 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='./output_dir',
                         help='path where to save, empty for no saving')
+
     parser.add_argument('--log_dir', default='./output_dir',
                         help='path where to tensorboard log')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
+    parser.add_argument('--use_color_jitter', action='store_true',
+                        help='Use color jitter .')
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
 
@@ -129,6 +135,7 @@ def main(args):
     # simple augmentation
     transform_train = transforms.Compose([
             transforms.RandomResizedCrop(args.input_size, scale=(0.2, 1.0), interpolation=3),  # 3 is bicubic
+            transforms.ColorJitter(0.4, 0.4, 0.2, 0.1) if args.use_color_jitter else (lambda x: x),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
@@ -161,7 +168,8 @@ def main(args):
     
     # define the model
     model = models_mae.__dict__[args.model](img_size=args.input_size, norm_pix_loss=args.norm_pix_loss,
-                                            cls_weight=args.cls_weight, recon_weight=args.recon_weight)
+                                            cls_weight=args.cls_weight, recon_weight=args.recon_weight,
+                                            patch_size=args.patch_size)
 
     model.to(device)
 
